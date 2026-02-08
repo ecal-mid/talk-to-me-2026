@@ -17,6 +17,9 @@ export default class DialogMachine extends TalkMachine {
     // initialiser les éléments de la machine de dialogue
     this.maxLeds = 10;
     this.ui.initLEDUI();
+
+    // Registre des états des boutons - simple array: 0 = released, 1 = pressed
+    this.buttonStates = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   }
 
   /* CONTRÔLE DU DIALOGUE */
@@ -31,7 +34,7 @@ export default class DialogMachine extends TalkMachine {
     this.nextState = 'initialisation';
     this.buttonPressCounter = 0;
     // Préréglages de voix [index de voix, pitch, vitesse]
-    this.preset_voice_1 = ['en-GB', 1, 0.8]; // [voice index, pitch, rate]
+    this.preset_voice_normal = ['en-GB', 1, 0.8]; // [voice index, pitch, rate]
     // ----- démarrer la machine avec le premier état -----
     this.dialogFlow();
   }
@@ -123,7 +126,7 @@ export default class DialogMachine extends TalkMachine {
 
       case 'can-speak':
         // CONCEPT DE DIALOGUE: Initiative système - la machine parle sans attendre d'entrée
-        this.speak('I can speak, i can count. Press a button.');
+        this.speakNormal('I can speak, i can count. Press a button.');
         this.nextState = 'count-press';
         this.ledsAllChangeColor('blue', 2);
         break;
@@ -137,13 +140,13 @@ export default class DialogMachine extends TalkMachine {
           this.nextState = 'toomuch';
           this.goToNextState();
         } else {
-          this.speak('you pressed ' + this.buttonPressCounter + ' time');
+          this.speakNormal('you pressed ' + this.buttonPressCounter + ' time');
         }
         break;
 
       case 'toomuch':
         // CONCEPT DE DIALOGUE: Transition conditionnelle - le comportement change selon l'état accumulé
-        this.speak('You are pressing too much! I Feel very pressed');
+        this.speakNormal('You are pressing too much! I Feel very pressed');
         this.nextState = 'enough-pressed';
         break;
 
@@ -174,9 +177,9 @@ export default class DialogMachine extends TalkMachine {
    *  fonction shorthand pour dire un texte avec la voix prédéfinie
    *  @param {string} _text le texte à dire
    */
-  speak(_text) {
+  speakNormal(_text) {
     // appelé pour dire un texte
-    this.speechText(_text, this.preset_voice_1);
+    this.speechText(_text, this.preset_voice_normal);
   }
 
   /**
@@ -246,6 +249,7 @@ export default class DialogMachine extends TalkMachine {
    * @protected
    */
   _handleButtonPressed(button, simulated = false) {
+    this.buttonStates[button] = 1;
     if (this.waitingForUserInput) {
       // this.dialogFlow('pressed', button);
     }
@@ -257,6 +261,7 @@ export default class DialogMachine extends TalkMachine {
    * @protected
    */
   _handleButtonReleased(button, simulated = false) {
+    this.buttonStates[button] = 0;
     if (this.waitingForUserInput) {
       this.dialogFlow('released', button);
     }
